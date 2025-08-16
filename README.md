@@ -1,4 +1,4 @@
-# 📘 DeveloperHub Task 7 – Customer Segmentation Dashboard
+# 📘 DeveloperHub Task 7 – Customer Segmentation - Mall Customers
 
 ## 📌 Task Objective  
 Segment mall customers using **unsupervised learning** techniques to understand their behavior and provide targeted marketing strategies. The dashboard and notebook utilize **K-Means clustering, PCA, and t-SNE** for visualization and cluster profiling.
