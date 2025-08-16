@@ -146,12 +146,15 @@ with tab2:
             feature_x = st.selectbox("X-axis feature:", features, index=0)
             feature_y = st.selectbox("Y-axis feature:", features, index=1 if len(features) > 1 else 0)
             
-            fig_scatter = px.scatter(df, x=feature_x, y=feature_y,
-                                   title=f"{feature_x} vs {feature_y}",
-                                   trendline="ols",  # Add trend line
-                                   color_discrete_sequence=['#FF6692'])
-            fig_scatter.update_layout(height=350)
-            st.plotly_chart(fig_scatter, use_container_width=True)
+            if feature_x != feature_y:
+                fig_scatter = px.scatter(df, x=feature_x, y=feature_y,
+                                       title=f"{feature_x} vs {feature_y}",
+                                       trendline="ols",  # Add trend line
+                                       color_discrete_sequence=['#FF6692'])
+                fig_scatter.update_layout(height=350)
+                st.plotly_chart(fig_scatter, use_container_width=True)
+            else:
+                st.warning("⚠️ Please select different features for X and Y axes")
 
 # --- Clustering Tab ---
 with tab3:
