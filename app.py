@@ -129,33 +129,6 @@ with tab2:
             fig.update_traces(opacity=0.7)
             st.plotly_chart(fig, use_container_width=True)
 
-    if len(features) >= 3:
-        st.subheader("🎯 Cluster Comparison (Radar Chart)")
-        selected_clusters = st.multiselect("Select clusters to compare:", 
-                                         sorted(df["Cluster"].unique()), 
-                                         default=sorted(df["Cluster"].unique())[:3])
-        
-        if selected_clusters and len(features) > 0:
-            fig_radar = px.line_polar(
-                theta=features,
-                title="Cluster Feature Comparison"
-            )
-            
-            for cluster in selected_clusters:
-                cluster_data = df[df["Cluster"] == cluster][features].mean()
-                fig_radar.add_trace(
-                    dict(
-                        type='scatterpolar',
-                        r=cluster_data.values.tolist(),
-                        theta=features,
-                        fill='toself',
-                        name=f'Cluster {cluster}'
-                    )
-                )
-            
-            fig_radar.update_layout(height=500)
-            st.plotly_chart(fig_radar, use_container_width=True)
-
 # --- Clustering Tab ---
 with tab3:
     st.subheader("📈 Cluster Visualization (PCA 2D)")
@@ -204,7 +177,8 @@ with tab3:
         st.subheader("🎯 Cluster Comparison (Radar Chart)")
         selected_clusters = st.multiselect("Select clusters to compare:", 
                                          sorted(df["Cluster"].unique()), 
-                                         default=sorted(df["Cluster"].unique())[:3])
+                                         default=sorted(df["Cluster"].unique())[:3],
+                                         key="clustering_tab_multiselect")
         
         if selected_clusters:
             radar_data = []
@@ -224,17 +198,49 @@ with tab3:
 # --- Insights Tab ---
 with tab4:
     st.subheader("💡 Marketing Strategies per Cluster")
+    
+    st.write("**📊 Cluster Overview**")
+    cluster_summary = df.groupby("Cluster").agg({
+        'Age': 'mean',
+        'Annual Income (k$)': 'mean' if 'Annual Income (k$)' in df.columns else 'count',
+        'Spending Score (1-100)': 'mean' if 'Spending Score (1-100)' in df.columns else 'count'
+    }).round(2)
+    
+    st.dataframe(cluster_summary, use_container_width=True)
+    
+    st.write("**🎯 Detailed Marketing Strategies**")
     for cluster_id, profile in df.groupby("Cluster").mean(numeric_only=True).iterrows():
-        with st.expander(f"📌 Cluster {cluster_id} Strategy"):
-            st.write(profile.to_frame().T)
-
-            if "Spending Score (1-100)" in profile.index:
-                score = profile["Spending Score (1-100)"]
-                if score > 60:
-                    st.success("🟢 **High spenders** — Premium offers, loyalty rewards, exclusive deals.")
-                elif score < 40:
-                    st.warning("🔵 **Low spenders** — Discounts, awareness campaigns, personalized offers.")
+        with st.expander(f"📌 Cluster {cluster_id} Strategy (Click to expand)"):
+            col_a, col_b = st.columns([1, 2])
+            
+            with col_a:
+                st.write("**Cluster Profile:**")
+                st.dataframe(profile.to_frame(name="Average Value"), use_container_width=True)
+            
+            with col_b:
+                st.write("**Recommended Strategy:**")
+                if "Spending Score (1-100)" in profile.index:
+                    score = profile["Spending Score (1-100)"]
+                    income = profile.get("Annual Income (k$)", 50)
+                    age = profile.get("Age", 35)
+                    
+                    if score > 60:
+                        st.success("🟢 **High Spenders** — Premium product lines, VIP membership programs, exclusive early access to new products, personalized luxury experiences.")
+                    elif score < 40:
+                        st.warning("🔵 **Budget Conscious** — Value deals, seasonal discounts, loyalty point systems, budget-friendly product recommendations.")
+                    else:
+                        st.info("🟡 **Moderate Spenders** — Balanced promotional offers, product bundles, targeted seasonal campaigns.")
+                    
+                    # Additional demographic insights
+                    if age > 45:
+                        st.write("👥 **Age Factor:** Focus on quality, reliability, and traditional marketing channels.")
+                    elif age < 30:
+                        st.write("👥 **Age Factor:** Emphasize trends, social media marketing, and digital engagement.")
+                    
+                    if income > 70:
+                        st.write("💰 **Income Factor:** Premium positioning and high-value propositions work well.")
+                    elif income < 40:
+                        st.write("💰 **Income Factor:** Cost-effective solutions and payment flexibility options.")
+                        
                 else:
-                    st.info("🟡 **Moderate spenders** — Balanced offers & engagement.")
-            else:
-                st.info("ℹ️ No Spending Score column found — general strategy required.")
+                    st.info("ℹ️ **General Strategy:** Analyze customer behavior patterns and preferences for targeted marketing approaches.")
