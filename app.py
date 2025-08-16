@@ -23,7 +23,7 @@ st.set_page_config(page_title="Customer Segmentation", layout="wide")
 # -------------------------------
 # Title
 # -------------------------------
-st.title("🛍️ Mall Customer Segmentation Dashboard")
+st.title("🛍️ Mall Customer Segmentation")
 st.markdown("Segment mall customers using **K-Means Clustering** and explore tailored marketing strategies.")
 
 # -------------------------------
@@ -260,3 +260,4 @@ with tab4:
                         
                 else:
                     st.info("ℹ️ **General Strategy:** Analyze customer behavior patterns and preferences for targeted marketing approaches.")
+
