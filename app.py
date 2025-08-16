@@ -25,30 +25,42 @@ st.set_page_config(page_title="Customer Segmentation", layout="wide")
 # -------------------------------
 page_bg = """
 <style>
-/* Background gradient */
+/* Gradient background (works well on laptop + mobile) */
 .stApp {
-    background: linear-gradient(135deg, #e0f7fa, #fce4ec);
+    background: linear-gradient(135deg, #fce4ec, #e0f7fa);
+    background-attachment: fixed;
+    background-size: cover;
 }
 
-/* Cards look */
+/* Card style */
 div[data-testid="stExpander"] {
-    background-color: rgba(255,255,255,0.8);
+    background-color: rgba(255,255,255,0.9);
     border-radius: 12px;
     padding: 10px;
     box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
 }
 
-/* Tabs */
+/* Tabs style */
 .stTabs [role="tablist"] button {
     font-weight: bold;
     border-radius: 8px;
     padding: 8px;
 }
 
-/* Title */
+/* Main Title */
 h1 {
     color: #00796b !important;
     text-shadow: 1px 1px 2px #ccc;
+}
+
+/* Mobile responsiveness */
+@media only screen and (max-width: 768px) {
+    h1 {
+        font-size: 24px !important;
+    }
+    .stTabs [role="tablist"] button {
+        font-size: 14px !important;
+    }
 }
 </style>
 """
@@ -116,7 +128,7 @@ tab1, tab2, tab3, tab4 = st.tabs(["📊 Dataset", "🔍 EDA", "📈 Clustering",
 # --- Dataset Tab ---
 with tab1:
     st.subheader("📊 Dataset Preview")
-    st.dataframe(df.head(10))
+    st.dataframe(df.head(10), use_container_width=True)
     st.write("Shape:", df.shape)
 
     # Download Buttons
@@ -135,21 +147,24 @@ with tab2:
     col1, col2 = st.columns(2)
 
     with col1:
-        st.write("Summary Statistics")
-        st.dataframe(df.describe())
+        st.write("📌 Summary Statistics")
+        st.dataframe(df.describe(), use_container_width=True)
 
     with col2:
-        st.write("Feature Distributions")
-        fig, ax = plt.subplots(figsize=(8,4))
-        df[features].hist(ax=ax)
-        plt.tight_layout()
+        st.write("📊 Feature Distributions")
+        fig, axes = plt.subplots(len(features), 1, figsize=(6, 3*len(features)))
+        if len(features) == 1:
+            axes = [axes]
+        for i, feat in enumerate(features):
+            sns.histplot(df[feat], kde=True, ax=axes[i], color="teal")
+            axes[i].set_title(f"Distribution of {feat}")
         st.pyplot(fig)
 
 # --- Clustering Tab ---
 with tab3:
     st.subheader("📈 Cluster Visualization (PCA 2D)")
     fig, ax = plt.subplots(figsize=(7,5))
-    scatter = ax.scatter(df["PCA1"], df["PCA2"], c=df["Cluster"], cmap="tab10", alpha=0.7)
+    scatter = ax.scatter(df["PCA1"], df["PCA2"], c=df["Cluster"], cmap="tab10", alpha=0.7, edgecolors="k")
     legend1 = ax.legend(*scatter.legend_elements(), title="Clusters")
     ax.add_artist(legend1)
     st.pyplot(fig)
@@ -158,7 +173,7 @@ with tab3:
     st.bar_chart(df["Cluster"].value_counts())
 
     st.subheader("📌 Cluster Profiles (Means)")
-    st.dataframe(df.groupby("Cluster").mean(numeric_only=True))
+    st.dataframe(df.groupby("Cluster").mean(numeric_only=True), use_container_width=True)
 
 # --- Insights Tab ---
 with tab4:
