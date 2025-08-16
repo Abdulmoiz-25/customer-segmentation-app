@@ -19,12 +19,11 @@ def load_default_data():
 # -------------------------------
 st.set_page_config(page_title="Customer Segmentation", layout="wide")
 
-# No custom CSS styling applied
 
 # -------------------------------
 # Title
 # -------------------------------
-st.title("🛍️ Customer Segmentation Dashboard")
+st.title("🛍️ Mall Customer Segmentation Dashboard")
 st.markdown("Segment mall customers using **K-Means Clustering** and explore tailored marketing strategies.")
 
 # -------------------------------
@@ -181,18 +180,35 @@ with tab3:
                                          key="clustering_tab_multiselect")
         
         if selected_clusters:
-            radar_data = []
-            for cluster in selected_clusters:
-                cluster_data = df[df["Cluster"] == cluster][features].mean()
-                radar_data.append(cluster_data.tolist() + [cluster_data.tolist()[0]])  # Close the radar
+            import plotly.graph_objects as go
             
-            fig_radar = px.line_polar(
-                r=radar_data[0] if radar_data else [],
-                theta=features + [features[0]],
-                line_close=True,
-                title="Cluster Feature Comparison (Normalized)"
+            fig_radar = go.Figure()
+            colors = px.colors.qualitative.Set3[:len(selected_clusters)]
+            
+            for i, cluster in enumerate(selected_clusters):
+                cluster_data = df[df["Cluster"] == cluster][features].mean()
+                radar_values = cluster_data.tolist() + [cluster_data.tolist()[0]]  # Close the radar
+                
+                fig_radar.add_trace(go.Scatterpolar(
+                    r=radar_values,
+                    theta=features + [features[0]],
+                    fill='toself',
+                    fillcolor=colors[i],
+                    line=dict(color=colors[i], width=3),
+                    opacity=0.6,
+                    name=f'Cluster {cluster}'
+                ))
+            
+            fig_radar.update_layout(
+                polar=dict(
+                    radialaxis=dict(
+                        visible=True,
+                        range=[0, max([df[f].max() for f in features])]
+                    )),
+                showlegend=True,
+                title="Cluster Feature Comparison (Multi-Cluster Radar)",
+                height=500
             )
-            fig_radar.update_layout(height=500)
             st.plotly_chart(fig_radar, use_container_width=True)
 
 # --- Insights Tab ---
