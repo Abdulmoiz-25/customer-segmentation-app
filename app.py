@@ -6,6 +6,7 @@ import seaborn as sns
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+import io
 
 # -------------------------------
 # Load default dataset
@@ -19,7 +20,44 @@ def load_default_data():
 # -------------------------------
 st.set_page_config(page_title="Customer Segmentation", layout="wide")
 
-st.title("🛍️ Mall Customer Segmentation")
+# -------------------------------
+# Custom Background & CSS
+# -------------------------------
+page_bg = """
+<style>
+/* Background gradient */
+.stApp {
+    background: linear-gradient(135deg, #e0f7fa, #fce4ec);
+}
+
+/* Cards look */
+div[data-testid="stExpander"] {
+    background-color: rgba(255,255,255,0.8);
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Tabs */
+.stTabs [role="tablist"] button {
+    font-weight: bold;
+    border-radius: 8px;
+    padding: 8px;
+}
+
+/* Title */
+h1 {
+    color: #00796b !important;
+    text-shadow: 1px 1px 2px #ccc;
+}
+</style>
+"""
+st.markdown(page_bg, unsafe_allow_html=True)
+
+# -------------------------------
+# Title
+# -------------------------------
+st.title("🛍️ Customer Segmentation Dashboard")
 st.markdown("Segment mall customers using **K-Means Clustering** and explore tailored marketing strategies.")
 
 # -------------------------------
@@ -77,13 +115,23 @@ tab1, tab2, tab3, tab4 = st.tabs(["📊 Dataset", "🔍 EDA", "📈 Clustering",
 
 # --- Dataset Tab ---
 with tab1:
-    st.subheader("Dataset Preview")
+    st.subheader("📊 Dataset Preview")
     st.dataframe(df.head(10))
     st.write("Shape:", df.shape)
 
+    # Download Buttons
+    st.subheader("⬇️ Download Segmented Dataset")
+    csv = df.to_csv(index=False).encode("utf-8")
+    st.download_button("📥 Download as CSV", csv, "segmented_customers.csv", "text/csv")
+
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+        df.to_excel(writer, index=False, sheet_name="Customers")
+    st.download_button("📊 Download as Excel", buffer.getvalue(), "segmented_customers.xlsx", "application/vnd.ms-excel")
+
 # --- EDA Tab ---
 with tab2:
-    st.subheader("Exploratory Data Analysis")
+    st.subheader("🔍 Exploratory Data Analysis")
     col1, col2 = st.columns(2)
 
     with col1:
@@ -99,22 +147,22 @@ with tab2:
 
 # --- Clustering Tab ---
 with tab3:
-    st.subheader("Cluster Visualization (PCA 2D)")
+    st.subheader("📈 Cluster Visualization (PCA 2D)")
     fig, ax = plt.subplots(figsize=(7,5))
     scatter = ax.scatter(df["PCA1"], df["PCA2"], c=df["Cluster"], cmap="tab10", alpha=0.7)
     legend1 = ax.legend(*scatter.legend_elements(), title="Clusters")
     ax.add_artist(legend1)
     st.pyplot(fig)
 
-    st.subheader("Cluster Counts")
+    st.subheader("📊 Cluster Counts")
     st.bar_chart(df["Cluster"].value_counts())
 
-    st.subheader("Cluster Profiles (Means)")
+    st.subheader("📌 Cluster Profiles (Means)")
     st.dataframe(df.groupby("Cluster").mean(numeric_only=True))
 
 # --- Insights Tab ---
 with tab4:
-    st.subheader("Marketing Strategies per Cluster")
+    st.subheader("💡 Marketing Strategies per Cluster")
 
     for cluster_id, profile in df.groupby("Cluster").mean(numeric_only=True).iterrows():
         with st.expander(f"📌 Cluster {cluster_id} Strategy"):
@@ -123,11 +171,10 @@ with tab4:
             if "Spending Score (1-100)" in profile.index:
                 score = profile["Spending Score (1-100)"]
                 if score > 60:
-                    st.success("🟢 **High spenders** — Target with premium offers, loyalty rewards, and exclusive deals.")
+                    st.success("🟢 **High spenders** — Premium offers, loyalty rewards, exclusive deals.")
                 elif score < 40:
-                    st.warning("🔵 **Low spenders** — Engage with discounts, awareness campaigns, and personalized offers.")
+                    st.warning("🔵 **Low spenders** — Discounts, awareness campaigns, personalized offers.")
                 else:
-                    st.info("🟡 **Moderate spenders** — Focus on retention with balanced offers and engagement.")
+                    st.info("🟡 **Moderate spenders** — Balanced offers & engagement.")
             else:
                 st.info("ℹ️ No Spending Score column found — general strategy required.")
-
