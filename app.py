@@ -129,6 +129,33 @@ with tab2:
             fig.update_traces(opacity=0.7)
             st.plotly_chart(fig, use_container_width=True)
 
+    if len(features) >= 3:
+        st.subheader("🎯 Cluster Comparison (Radar Chart)")
+        selected_clusters = st.multiselect("Select clusters to compare:", 
+                                         sorted(df["Cluster"].unique()), 
+                                         default=sorted(df["Cluster"].unique())[:3])
+        
+        if selected_clusters and len(features) > 0:
+            fig_radar = px.line_polar(
+                theta=features,
+                title="Cluster Feature Comparison"
+            )
+            
+            for cluster in selected_clusters:
+                cluster_data = df[df["Cluster"] == cluster][features].mean()
+                fig_radar.add_trace(
+                    dict(
+                        type='scatterpolar',
+                        r=cluster_data.values.tolist(),
+                        theta=features,
+                        fill='toself',
+                        name=f'Cluster {cluster}'
+                    )
+                )
+            
+            fig_radar.update_layout(height=500)
+            st.plotly_chart(fig_radar, use_container_width=True)
+
 # --- Clustering Tab ---
 with tab3:
     st.subheader("📈 Cluster Visualization (PCA 2D)")
@@ -183,9 +210,7 @@ with tab3:
             radar_data = []
             for cluster in selected_clusters:
                 cluster_data = df[df["Cluster"] == cluster][features].mean()
-                # Normalize to 0-1 scale for radar chart
-                normalized_data = (cluster_data - cluster_data.min()) / (cluster_data.max() - cluster_data.min())
-                radar_data.append(normalized_data.tolist() + [normalized_data.tolist()[0]])  # Close the radar
+                radar_data.append(cluster_data.tolist() + [cluster_data.tolist()[0]])  # Close the radar
             
             fig_radar = px.line_polar(
                 r=radar_data[0] if radar_data else [],
