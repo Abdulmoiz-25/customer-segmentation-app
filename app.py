@@ -19,46 +19,7 @@ def load_default_data():
 # -------------------------------
 st.set_page_config(page_title="Customer Segmentation", layout="wide")
 
-# -------------------------------
-# Custom Background & CSS
-# -------------------------------
-page_bg = """
-<style>
-.stApp {
-    background: linear-gradient(135deg, #e0f7fa, #fce4ec);
-}
-div[data-testid="stExpander"] {
-    background-color: rgba(255,255,255,0.9);
-    border-radius: 12px;
-    padding: 10px;
-    box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
-}
-.stTabs [role="tablist"] button {
-    font-weight: bold;
-    border-radius: 8px;
-    padding: 8px;
-}
-h1 {
-    color: #00796b !important;
-    text-shadow: 1px 1px 2px #ccc;
-}
-[data-testid="stDataFrame"] {
-    border-radius: 10px;
-    border: 1px solid #ddd;
-    box-shadow: 1px 1px 6px rgba(0,0,0,0.05);
-}
-@media (max-width: 768px) {
-    h1 {
-        font-size: 24px !important;
-    }
-    .stTabs [role="tablist"] button {
-        font-size: 12px !important;
-        padding: 6px;
-    }
-}
-</style>
-"""
-st.markdown(page_bg, unsafe_allow_html=True)
+# No custom CSS styling applied
 
 # -------------------------------
 # Title
@@ -143,7 +104,7 @@ with tab2:
     with col2:
         st.write("Feature Distributions")
         for feature in features[:3]:  # show up to 3 features for readability
-            fig = px.histogram(df, x=feature, nbins=20, title=f"Distribution of {feature}", color_discrete_sequence=["#00796b"])
+            fig = px.histogram(df, x=feature, nbins=20, title=f"Distribution of {feature}")
             st.plotly_chart(fig, use_container_width=True)
 
 # --- Clustering Tab ---
@@ -156,10 +117,12 @@ with tab3:
     st.plotly_chart(fig, use_container_width=True)
 
     st.subheader("📊 Cluster Counts")
-    fig = px.bar(df["Cluster"].value_counts().reset_index(),
-                 x="index", y="Cluster",
-                 labels={"index": "Cluster", "Cluster": "Count"},
-                 color="index")
+    cluster_counts = df["Cluster"].value_counts().reset_index()
+    cluster_counts.columns = ['Cluster', 'Count']  # Ensure proper column names
+    fig = px.bar(cluster_counts,
+                 x="Cluster", y="Count",
+                 labels={"Cluster": "Cluster", "Count": "Count"},
+                 title="Distribution of Customers by Cluster")
     st.plotly_chart(fig, use_container_width=True)
 
     st.subheader("📌 Cluster Profiles (Means)")
