@@ -1,8 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
+import plotly.express as px
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
@@ -25,41 +24,36 @@ st.set_page_config(page_title="Customer Segmentation", layout="wide")
 # -------------------------------
 page_bg = """
 <style>
-/* Gradient background (works well on laptop + mobile) */
 .stApp {
-    background: linear-gradient(135deg, #fce4ec, #e0f7fa);
-    background-attachment: fixed;
-    background-size: cover;
+    background: linear-gradient(135deg, #e0f7fa, #fce4ec);
 }
-
-/* Card style */
 div[data-testid="stExpander"] {
     background-color: rgba(255,255,255,0.9);
     border-radius: 12px;
     padding: 10px;
     box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
 }
-
-/* Tabs style */
 .stTabs [role="tablist"] button {
     font-weight: bold;
     border-radius: 8px;
     padding: 8px;
 }
-
-/* Main Title */
 h1 {
     color: #00796b !important;
     text-shadow: 1px 1px 2px #ccc;
 }
-
-/* Mobile responsiveness */
-@media only screen and (max-width: 768px) {
+[data-testid="stDataFrame"] {
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    box-shadow: 1px 1px 6px rgba(0,0,0,0.05);
+}
+@media (max-width: 768px) {
     h1 {
         font-size: 24px !important;
     }
     .stTabs [role="tablist"] button {
-        font-size: 14px !important;
+        font-size: 12px !important;
+        padding: 6px;
     }
 }
 </style>
@@ -92,10 +86,8 @@ if "Gender" in df.columns:
 elif "Genre" in df.columns:
     df["Genre"] = df["Genre"].map({"Male": 0, "Female": 1}).astype(int)
 
-# Select only numeric features
+# Select numeric features
 X = df.select_dtypes(include=["int64", "float64"])
-
-# Handle scaling
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
@@ -106,15 +98,14 @@ st.sidebar.header("⚙️ Clustering Options")
 k = st.sidebar.slider("Number of clusters (k)", 2, 10, 5)
 features = st.sidebar.multiselect("Select features for clustering", X.columns.tolist(), default=X.columns.tolist())
 
-# If features are selected, subset data
 if features:
     X_scaled = scaler.fit_transform(df[features])
 
-# Fit KMeans
+# KMeans
 kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
 df["Cluster"] = kmeans.fit_predict(X_scaled)
 
-# PCA for visualization
+# PCA
 pca = PCA(2)
 X_pca = pca.fit_transform(X_scaled)
 df["PCA1"] = X_pca[:, 0]
@@ -131,8 +122,7 @@ with tab1:
     st.dataframe(df.head(10), use_container_width=True)
     st.write("Shape:", df.shape)
 
-    # Download Buttons
-    st.subheader("⬇️ Download Segmented Dataset")
+    # Download buttons
     csv = df.to_csv(index=False).encode("utf-8")
     st.download_button("📥 Download as CSV", csv, "segmented_customers.csv", "text/csv")
 
@@ -147,30 +137,30 @@ with tab2:
     col1, col2 = st.columns(2)
 
     with col1:
-        st.write("📌 Summary Statistics")
+        st.write("Summary Statistics")
         st.dataframe(df.describe(), use_container_width=True)
 
     with col2:
-        st.write("📊 Feature Distributions")
-        fig, axes = plt.subplots(len(features), 1, figsize=(6, 3*len(features)))
-        if len(features) == 1:
-            axes = [axes]
-        for i, feat in enumerate(features):
-            sns.histplot(df[feat], kde=True, ax=axes[i], color="teal")
-            axes[i].set_title(f"Distribution of {feat}")
-        st.pyplot(fig)
+        st.write("Feature Distributions")
+        for feature in features[:3]:  # show up to 3 features for readability
+            fig = px.histogram(df, x=feature, nbins=20, title=f"Distribution of {feature}", color_discrete_sequence=["#00796b"])
+            st.plotly_chart(fig, use_container_width=True)
 
 # --- Clustering Tab ---
 with tab3:
     st.subheader("📈 Cluster Visualization (PCA 2D)")
-    fig, ax = plt.subplots(figsize=(7,5))
-    scatter = ax.scatter(df["PCA1"], df["PCA2"], c=df["Cluster"], cmap="tab10", alpha=0.7, edgecolors="k")
-    legend1 = ax.legend(*scatter.legend_elements(), title="Clusters")
-    ax.add_artist(legend1)
-    st.pyplot(fig)
+    fig = px.scatter(df, x="PCA1", y="PCA2", color="Cluster",
+                     title="Customer Clusters (PCA Projection)",
+                     hover_data=df.columns,
+                     color_continuous_scale=px.colors.qualitative.Set1)
+    st.plotly_chart(fig, use_container_width=True)
 
     st.subheader("📊 Cluster Counts")
-    st.bar_chart(df["Cluster"].value_counts())
+    fig = px.bar(df["Cluster"].value_counts().reset_index(),
+                 x="index", y="Cluster",
+                 labels={"index": "Cluster", "Cluster": "Count"},
+                 color="index")
+    st.plotly_chart(fig, use_container_width=True)
 
     st.subheader("📌 Cluster Profiles (Means)")
     st.dataframe(df.groupby("Cluster").mean(numeric_only=True), use_container_width=True)
@@ -178,7 +168,6 @@ with tab3:
 # --- Insights Tab ---
 with tab4:
     st.subheader("💡 Marketing Strategies per Cluster")
-
     for cluster_id, profile in df.groupby("Cluster").mean(numeric_only=True).iterrows():
         with st.expander(f"📌 Cluster {cluster_id} Strategy"):
             st.write(profile.to_frame().T)
