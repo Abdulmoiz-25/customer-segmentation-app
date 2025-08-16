@@ -19,7 +19,7 @@ def load_default_data():
 # -------------------------------
 st.set_page_config(page_title="Customer Segmentation", layout="wide")
 
-st.title("🛍️ Customer Segmentation Dashboard")
+st.title("🛍️ Mall Customer Segmentation")
 st.markdown("Segment mall customers using **K-Means Clustering** and explore tailored marketing strategies.")
 
 # -------------------------------
@@ -130,3 +130,4 @@ with tab4:
                     st.info("🟡 **Moderate spenders** — Focus on retention with balanced offers and engagement.")
             else:
                 st.info("ℹ️ No Spending Score column found — general strategy required.")
+
