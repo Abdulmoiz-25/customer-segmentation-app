@@ -128,33 +128,6 @@ with tab2:
             )
             fig.update_traces(opacity=0.7)
             st.plotly_chart(fig, use_container_width=True)
-    
-    st.write("**🎯 Advanced Analysis**")
-    col3, col4 = st.columns(2)
-    
-    with col3:
-        if len(features) >= 2:
-            selected_feature = st.selectbox("Select feature for box plot analysis:", features)
-            fig_box = px.box(df, y=selected_feature, 
-                           title=f"Box Plot: {selected_feature}",
-                           color_discrete_sequence=['#00CC96'])
-            fig_box.update_layout(height=350, showlegend=False)
-            st.plotly_chart(fig_box, use_container_width=True)
-    
-    with col4:
-        if len(features) >= 2:
-            feature_x = st.selectbox("X-axis feature:", features, index=0)
-            feature_y = st.selectbox("Y-axis feature:", features, index=1 if len(features) > 1 else 0)
-            
-            if feature_x != feature_y:
-                fig_scatter = px.scatter(df, x=feature_x, y=feature_y,
-                                       title=f"{feature_x} vs {feature_y}",
-                                       trendline="ols",  # Add trend line
-                                       color_discrete_sequence=['#FF6692'])
-                fig_scatter.update_layout(height=350)
-                st.plotly_chart(fig_scatter, use_container_width=True)
-            else:
-                st.warning("⚠️ Please select different features for X and Y axes")
 
 # --- Clustering Tab ---
 with tab3:
